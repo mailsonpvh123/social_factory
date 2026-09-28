@@ -1,33 +1,34 @@
-from fastapi import FastAPI, Request
-from aiogram import Bot, Dispatcher, types
-import uvicorn
-import os
+import streamlit as st
 
-# Variáveis de ambiente injetadas pelo Easypanel
-BOT_TOKEN = os.getenv("BOT_TOKEN", "TOKEN_PROVISORIO")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://api.seudominio.com/webhook")
+# Configuração da página para ficar com cara de App
+st.set_page_config(page_title="Social Factory", page_icon="🏭", layout="centered")
 
-app = FastAPI()
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
+st.title("🏭 Social Factory")
+st.write("Sua máquina de conteúdo automatizada. Selecione o que deseja gerar hoje:")
 
-@app.on_event("startup")
-async def on_startup():
-    # Avisa ao Telegram para onde enviar as mensagens recebidas
-    await bot.set_webhook(WEBHOOK_URL)
+# Cria duas abas na interface
+tab1, tab2 = st.tabs(["🖼️ Carrossel", "🎬 Reel (Modelagem)"])
 
-@app.post("/webhook")
-async def telegram_webhook(request: Request):
-    # Recebe o pacote de dados do Telegram e processa no Aiogram
-    update_data = await request.json()
-    update = types.Update(**update_data)
-    await dp.feed_update(bot, update)
-    return {"status": "ok"}
+# Aba 1: Fábrica de Carrossel
+with tab1:
+    st.subheader("Gerar Novo Carrossel")
+    nicho_c = st.text_input("Nicho da Página (ex: Saúde, Estoicismo):")
+    tema_c = st.text_input("Tema do Post (ex: 3 dicas para secar):")
+    
+    if st.button("Fabricar Carrossel", type="primary", use_container_width=True):
+        if nicho_c and tema_c:
+            st.success(f"Comando recebido! Em breve o sistema vai gerar as imagens de '{tema_c}' para o nicho de {nicho_c}.")
+        else:
+            st.warning("Por favor, preencha o nicho e o tema antes de gerar.")
 
-@dp.message()
-async def echo_handler(message: types.Message):
-    # Resposta básica para validar que o bot está vivo
-    await message.answer(f"Chefe, comando recebido na Social Factory: {message.text}")
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# Aba 2: Fábrica de Reels
+with tab2:
+    st.subheader("Remodelar Reel Viral")
+    link_r = st.text_input("Link do Reel Concorrente:")
+    nicho_r = st.text_input("Seu Nicho (Para adaptar a copy):")
+    
+    if st.button("Clonar e Remodelar", type="primary", use_container_width=True):
+        if link_r and nicho_r:
+            st.success(f"Comando recebido! O sistema vai baixar o vídeo do link e aplicar a narrativa do nicho de {nicho_r}.")
+        else:
+            st.warning("Por favor, preencha o link e o seu nicho.")
