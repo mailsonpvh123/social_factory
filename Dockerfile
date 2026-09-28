@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia todo o resto do código para dentro do container
 COPY . .
 
-# Expõe a porta que o FastAPI vai rodar
-EXPOSE 8000
+# Expõe a porta padrão do Streamlit
+EXPOSE 8501
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando para iniciar o painel web
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
