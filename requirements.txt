@@ -2,3 +2,4 @@ fastapi
 uvicorn
 aiogram
 streamlit
+google-generativeai
