@@ -26,15 +26,22 @@ with tab1:
     st.subheader("Gerar Novo Carrossel")
     nicho_c = st.text_input("Nicho da Página (ex: Receitas, Finanças, Estoicismo):")
     tema_c = st.text_input("Tema do Post (ex: 3 lanches rápidos para secar):")
+    link_base_c = st.text_input("Link da Publicação Base (Opcional - para remodelar):")
     
     if st.button("Fabricar Roteiro", type="primary", use_container_width=True):
         if not GEMINI_API_KEY:
             st.error("Aviso: Configure a GEMINI_API_KEY nas variáveis de ambiente do Easypanel.")
         elif nicho_c and tema_c:
-            with st.spinner("O cérebro da IA está a processar as copys..."):
+            with st.spinner("O cérebro da IA está processando as copys..."):
+                
+                # Injeta a instrução de remodelagem caso você tenha colado um link
+                instrucao_extra = ""
+                if link_base_c:
+                    instrucao_extra = f"\nUse o conteúdo deste link como inspiração principal para remodelar a copy: {link_base_c}\nCrie algo ainda melhor, mas com a mesma essência viral."
+
                 prompt = f"""
                 Você é um copywriter de elite no Instagram, especialista em páginas dark do nicho de {nicho_c}.
-                Escreva o conteúdo para um carrossel magnético e viral sobre o tema: '{tema_c}'.
+                Escreva o conteúdo para um carrossel magnético e viral sobre o tema: '{tema_c}'.{instrucao_extra}
                 
                 A estrutura de saída deve seguir exatamente as seguintes chaves:
                 "slide_1": "Título impossível de ser ignorado (gancho)",
@@ -46,9 +53,9 @@ with tab1:
                 """
                 
                 try:
-                    # Invoca o Gemini 2.5 Flash forçando a saída em JSON puro
+                    # Invoca o Gemini 3.8 Flash (versão atualizada e exigida pela API)
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.8-flash',
                         contents=prompt,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
@@ -58,7 +65,7 @@ with tab1:
                     roteiro = json.loads(response.text)
                     st.success("Copy gerada com sucesso!")
                     
-                    # Exibe o resultado no ecrã
+                    # Exibe o resultado formatado na tela
                     for chave, valor in roteiro.items():
                         if chave != "legenda":
                             st.info(f"**{chave.replace('_', ' ').title()}**: {valor}")
