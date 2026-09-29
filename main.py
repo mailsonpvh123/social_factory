@@ -5,13 +5,10 @@ import os
 import json
 import time
 
-# Configuração da página
 st.set_page_config(page_title="Social Factory", page_icon="🏭", layout="centered")
 
-# Captura a chave do Gemini configurada no Easypanel
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-# Inicializa o cliente da nova SDK se a chave existir
 if GEMINI_API_KEY:
     client = genai.Client(api_key=GEMINI_API_KEY)
 else:
@@ -22,7 +19,6 @@ st.write("A sua máquina de conteúdo automatizada. Selecione o que deseja gerar
 
 tab1, tab2 = st.tabs(["🖼️ Carrossel", "🎬 Reel (Modelagem)"])
 
-# Aba 1: A Fábrica de Carrossel
 with tab1:
     st.subheader("Gerar Novo Carrossel")
     nicho_c = st.text_input("Nicho da Página (ex: Receitas, Finanças, Estoicismo):")
@@ -34,31 +30,36 @@ with tab1:
             st.error("Aviso: Configure a GEMINI_API_KEY nas variáveis de ambiente do Easypanel.")
         elif nicho_c and tema_c:
             
-            # Injeta a instrução de remodelagem caso você tenha colado um link
             instrucao_extra = ""
             if link_base_c:
-                instrucao_extra = f"\nUse o conteúdo deste link como inspiração principal para remodelar a copy: {link_base_c}\nCrie algo ainda melhor, mas com a mesma essência viral."
+                instrucao_extra = f"\nUse o conteúdo deste link como inspiração: {link_base_c}\nCrie algo melhor, mantendo a essência viral."
 
             prompt = f"""
-            Você é um copywriter de elite no Instagram, especialista em páginas dark do nicho de {nicho_c}.
-            Escreva o conteúdo para um carrossel magnético e viral sobre o tema: '{tema_c}'.{instrucao_extra}
+            Atue como copywriter de elite no Instagram, nicho de {nicho_c}.
+            Escreva um carrossel viral sobre: '{tema_c}'.{instrucao_extra}
             
-            A estrutura de saída deve seguir exatamente as seguintes chaves:
-            "slide_1": "Título impossível de ser ignorado (gancho)",
-            "slide_2": "Conteúdo de alto valor - Parte 1",
-            "slide_3": "Conteúdo de alto valor - Parte 2",
-            "slide_4": "Conteúdo de alto valor - Parte 3",
-            "slide_5": "Chamada para ação (CTA) forte mandando para o link da bio",
-            "legenda": "Legenda persuasiva estruturada com quebra de linhas e 5 hashtags relevantes"
+            Retorne APENAS um JSON válido com esta estrutura exata:
+            {{
+                "slide_1": "Título gancho",
+                "prompt_img_1": "Prompt em inglês, ultra-realista, descrevendo a imagem de fundo para o slide 1",
+                "slide_2": "Conteúdo parte 1",
+                "prompt_img_2": "Prompt em inglês para imagem do slide 2",
+                "slide_3": "Conteúdo parte 2",
+                "prompt_img_3": "Prompt em inglês para imagem do slide 3",
+                "slide_4": "Conteúdo parte 3",
+                "prompt_img_4": "Prompt em inglês para imagem do slide 4",
+                "slide_5": "Chamada para ação (CTA)",
+                "prompt_img_5": "Prompt em inglês para imagem do slide 5",
+                "legenda": "Legenda persuasiva com 5 hashtags"
+            }}
             """
             
             status_placeholder = st.empty()
             max_tentativas = 3
             
-            # Sistema de Auto-Retentativa para driblar o erro 503
             for tentativa in range(1, max_tentativas + 1):
                 try:
-                    status_placeholder.info(f"O cérebro da IA está a processar as copys... (Tentativa {tentativa}/{max_tentativas})")
+                    status_placeholder.info(f"A processar copys e prompts visuais... (Tentativa {tentativa}/{max_tentativas})")
                     
                     response = client.models.generate_content(
                         model='gemini-3.8-flash',
@@ -69,28 +70,30 @@ with tab1:
                     )
                     
                     roteiro = json.loads(response.text)
-                    status_placeholder.success("Copy gerada com sucesso!")
+                    status_placeholder.success("Roteiro e prompts gerados com sucesso!")
                     
-                    # Exibe o resultado formatado na tela
-                    for chave, valor in roteiro.items():
-                        if chave != "legenda":
-                            st.info(f"**{chave.replace('_', ' ').title()}**: {valor}")
+                    for i in range(1, 6):
+                        slide_key = f"slide_{i}"
+                        prompt_key = f"prompt_img_{i}"
+                        if slide_key in roteiro:
+                            st.info(f"**Slide {i}**: {roteiro[slide_key]}")
+                        if prompt_key in roteiro:
+                            st.caption(f"🎨 **Prompt da Imagem:** {roteiro[prompt_key]}")
                     
-                    st.text_area("Legenda pronta para copiar:", roteiro.get("legenda", ""), height=200)
-                    break  # Sai do loop de tentativas se deu certo
+                    st.text_area("Legenda pronta para copiar:", roteiro.get("legenda", ""), height=150)
+                    break
                     
                 except Exception as e:
                     erro_str = str(e)
                     if "503" in erro_str and tentativa < max_tentativas:
-                        status_placeholder.warning("Servidor do Google lotado. A aguardar 4 segundos antes da próxima tentativa...")
+                        status_placeholder.warning("Servidor ocupado. Tentando novamente em 4s...")
                         time.sleep(4)
                     else:
-                        status_placeholder.error(f"Erro na comunicação com a IA: {e}")
+                        status_placeholder.error(f"Erro na IA: {e}")
                         break
         else:
             st.warning("Preencha o nicho e o tema para prosseguir.")
 
-# Aba 2: A Fábrica de Reels
 with tab2:
     st.subheader("Remodelar Reel Viral")
     link_r = st.text_input("Link do Reel Concorrente:")
@@ -98,6 +101,6 @@ with tab2:
     
     if st.button("Clonar e Remodelar", type="primary", use_container_width=True):
         if link_r and nicho_r:
-            st.success(f"Em breve: O sistema vai baixar {link_r} e reescrever para {nicho_r}.")
+            st.success(f"Em breve: Download de {link_r} e reescrita para {nicho_r}.")
         else:
             st.warning("Preencha o link e o seu nicho.")
